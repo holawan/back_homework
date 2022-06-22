@@ -96,4 +96,4 @@
 
 ##### REMARK를 신경쓰며 개발하자 
 
-![ERD](README.assets/ERD.PNG)
+![ERD](README.assets/ERD-16558273358541.PNG)
