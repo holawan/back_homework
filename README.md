@@ -96,4 +96,14 @@
 
 ##### REMARK를 신경쓰며 개발하자 
 
-![ERD](README.assets/ERD-16558273358541.PNG)
+![ERD](README.assets/ERD-16559205917001.PNG)
+
+
+
+### DRF 서버 구상하기
+
+- Plcae List 
+- Place Detail
+- Point log List 
+- Review List (Review_image를 역참조 )
+- Review Detail (User 참조 Place 참조  Image 역참조 )
