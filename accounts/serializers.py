@@ -1,3 +1,4 @@
+from dataclasses import fields
 from rest_framework import serializers 
 from django.contrib.auth import get_user_model
 
@@ -15,3 +16,9 @@ class SignupSerializer(serializers.Serializer) :
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+class UserSerializer(serializers.ModelSerializer) :
+
+    class Meta : 
+        model = User
+        fields = ('pk',)
