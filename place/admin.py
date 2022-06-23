@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import Place,ReviewImage,Review,Point
+from .models import Place,ReviewImage,Review
 # Register your models here.
 
 class PlaceAdmin(admin.ModelAdmin):
@@ -22,10 +22,3 @@ class ReviewImageAdmin(admin.ModelAdmin) :
     list_display = ('review',)
 
 admin.site.register(ReviewImage,ReviewImageAdmin)
-
-class PointAdmin(admin.ModelAdmin) :
-
-    list_display = ('review','action','calculation','point_now')
-
-
-admin.site.register(Point,PointAdmin)

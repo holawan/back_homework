@@ -29,15 +29,3 @@ class ReviewImage(models.Model) :
     #이미지 
     image = models.ImageField(upload_to='thumbnails/review/',blank=True, null=True)
     
-class Point(models.Model) :
-    #리뷰를 지워도 로그는 보관하도록 SET_DEFALUT 설정 
-    review = models.ForeignKey(Review,on_delete=models.SET_DEFAULT,default = 'deleted_review',related_name='point')
-    #생성,수정,삭제인지 action 확인 
-    action = models.CharField(max_length=10)
-    #증/감여부 
-    calculation = models.BooleanField()
-    #부여하거나 차감할 포인트
-    point = models.IntegerField()
-    #유저의 현재 포인트 
-    point_now = models.IntegerField()
-
