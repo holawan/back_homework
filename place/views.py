@@ -1,17 +1,13 @@
-from django.shortcuts import render
 from django.shortcuts import get_object_or_404,get_list_or_404
-from django.db.models import Count
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from accounts.models import PointLog, User
-from rest_framework.decorators import authentication_classes, permission_classes
+from rest_framework.decorators import  permission_classes
 from rest_framework.permissions import IsAuthenticated,AllowAny
 from place.serializers.place import PlaceListSerializer, PlaceSerializer
-from place.serializers.review import ReviewImageSerializer, ReviewSerializer
+from place.serializers.review import ReviewSerializer
 from .models import Place, Review
-from rest_framework.viewsets import ModelViewSet
-from rest_framework import permissions
 from rest_framework.views import APIView
 
 # Create your views here.
@@ -30,13 +26,6 @@ def place_deatil(request, place_pk):
 
     serializer = PlaceSerializer(place)
     return Response(serializer.data)
-
-# @api_view(['GET'])
-# @permission_classes([AllowAny]) 
-# def review_list(request,place_pk) :
-#     reviews = Review.objects.filter(place_id=place_pk)
-#     serializer = ReviewSerializer(reviews,many=True)
-#     return Response(serializer.data)
 
 
 class ReviewListCreateView(APIView):
@@ -97,6 +86,13 @@ class ReviewUpdateOrDeleteView(APIView):
 
     def put(self, request,place_pk,review_pk):
         #작성된 리뷰 content나 사진이 있을 때,
+                #작성된 리뷰 content와 사진필드가 둘다 없을 때, 예외처리
+        if not request.data :
+            return Response({'error' : '리뷰나 사진을 등록해주세요'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        #필드는 존재하나 텍스트와 이미지가 둘 다 존재하지 않을 때 
+        if not request.data['content'] and not request.data['image'] :
+            return Response({'error' : '리뷰나 사진을 등록해주세요'}, status=status.HTTP_400_BAD_REQUEST)
         review = get_object_or_404(Review,pk=review_pk) 
         point = 0
         serializer = ReviewSerializer(instance=review,data=request.data, context={"request": request,'review_pk':review_pk})
@@ -167,6 +163,7 @@ class ReviewUpdateOrDeleteView(APIView):
         place = get_object_or_404(Place,pk=place_pk)
 
         first_review = place.reviews.all()[0]
+        print(first_review,review)
         if first_review ==review :
             point -= 1 
         pointlog = PointLog.objects.create(user=self.request.user,place=place,

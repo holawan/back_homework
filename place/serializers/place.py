@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from accounts.serializers import UserSerializer
 
 from place.models import Place, Review
 
@@ -12,7 +11,6 @@ class PlaceListSerializer(serializers.ModelSerializer):
 
 
 class DummyReviewSerializer(serializers.ModelSerializer) :
-    # user = UserSerializer(read_only=True)
     class Meta :
         model = Review
         fields = ('user','content',)
