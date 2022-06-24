@@ -76,7 +76,6 @@ class ReviewListCreateView(APIView):
                 point +=1 
             #내용이 있을 때 
             if serializer.data['content']  :
-                print(serializer.data['content']) 
                 point += 1 
 
             pointlog = PointLog.objects.create(user=self.request.user,place=place,
@@ -143,8 +142,9 @@ class ReviewUpdateOrDeleteView(APIView):
             pointlog = PointLog.objects.create(user=self.request.user,place=place,
                         action='수정',calculation=calculation,point=point)
             pointlog.save()
-
             user = get_object_or_404(User,username=request.user)
+            print(user)
+            print(user.explain)
             user.point += point 
             user.save()
             

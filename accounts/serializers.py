@@ -2,6 +2,8 @@ from dataclasses import fields
 from rest_framework import serializers 
 from django.contrib.auth import get_user_model
 
+from accounts.models import PointLog
+
 
 User = get_user_model()
 class SignupSerializer(serializers.Serializer) :
@@ -22,3 +24,10 @@ class UserSerializer(serializers.ModelSerializer) :
     class Meta : 
         model = User
         fields = ('pk',)
+
+
+class UserPointSerializer(serializers.ModelSerializer) :
+
+    class Meta : 
+        model = PointLog
+        fields = '__all__'

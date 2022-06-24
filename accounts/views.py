@@ -1,11 +1,13 @@
-from django.shortcuts import render
+from django.shortcuts import get_list_or_404, render
 from django.shortcuts import get_object_or_404 
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import api_view 
 from rest_framework.response import Response
 
-from .serializers import SignupSerializer
+from accounts.models import PointLog
+
+from .serializers import SignupSerializer, UserPointSerializer
 
 
 # Create your views here.
@@ -23,3 +25,11 @@ def signup(request) :
             return Response({'message':'ok','id':request.data['username']},status=status.HTTP_201_CREATED)
         else :
             return Response({"message" : "Request Body Error"},status=status.HTTP_409_CONFLICT)
+
+@api_view(['GET'])
+def pointlog(request,user_pk):
+    userlog = get_list_or_404(PointLog,user=user_pk)
+    print(userlog)
+    # print(places)
+    serializer = UserPointSerializer(userlog, many=True)
+    return Response(serializer.data)
