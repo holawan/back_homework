@@ -82,13 +82,19 @@
   
     - 조건1 : 글만 작성한 리뷰에 사진을 추가하면 1점 
       - 사진만 작성한 리뷰에서 글을 추가하면 1점 
-  
     - 조건 2:  글과 사진이 있는 리뷰에서 사진을 모두 삭제하면 1점을 회수 
       - 글과 사진이 있는 리뷰에서 글을 삭제하면 1점 회수
-
-
+    
+    ```python
         def put(self, request,place_pk,review_pk):
             #작성된 리뷰 content나 사진이 있을 때,
+                    #작성된 리뷰 content와 사진필드가 둘다 없을 때, 예외처리
+            if not request.data :
+                return Response({'error' : '리뷰나 사진을 등록해주세요'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            #필드는 존재하나 텍스트와 이미지가 둘 다 존재하지 않을 때 
+            if not request.data['content'] and not request.data['image'] :
+                return Response({'error' : '리뷰나 사진을 등록해주세요'}, status=status.HTTP_400_BAD_REQUEST)
             review = get_object_or_404(Review,pk=review_pk) 
             point = 0
             serializer = ReviewSerializer(instance=review,data=request.data, context={"request": request,'review_pk':review_pk})
@@ -96,7 +102,7 @@
             place = get_object_or_404(Place, pk=place_pk)
     
             is_content = bool(review.content)
-            is_image = bool(review.reviewimage_set.all())
+            is_image = review.reviewimage_set.exists()
             #유효성검사 통과하면 
             if serializer.is_valid():
                 #저장 
@@ -134,7 +140,8 @@
                 pointlog = PointLog.objects.create(user=self.request.user,place=place,
                             action='수정',calculation=calculation,point=point)
                 pointlog.save()
-                user = get_object_or_404(User,username=request.user)
+                
+                user = get_object_or_404(User,pk=request.user.pk)
      
                 user.point += point 
                 user.save()
@@ -142,6 +149,8 @@
                 response_dict.update(serializer.data)
                 
                 return Response(data=response_dict)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    ```
 
   - #### 삭제
 
@@ -724,16 +733,19 @@ test2의 현재 point{"pk":2,
 -  1:N관계의 필드를 만들고, 한번의 post/put 요청으로 N필드에 데이터를 저장해보지 않아서 어려움을 겪었습니다.
 - 또한, 이미지 필드이기 때문에, 데이터 핸들링에 어려움을 겪었으나, 레퍼런스를 참고해서 해결했습니다.
 - 평소 DRF 서버를 설계할 때, function based view로 설계를 진행했으나, 레퍼런스를 참고해서 class based view로 진행했습니다. 
-- 레퍼런스에는 생성에 대한 예제만 제공되어, 해당 게시글을 기반으로 update 기능을 만드는데, 오랜시간이 소요되었으나 결과적으로 기능을 구현했습니다.
-
+-  레퍼런스에는 생성에 대한 예제만 제공되어, 해당 게시글을 기반으로 update 기능을 만드는데, 오랜시간이 소요되었으나 결과적으로 기능을 구현했습니다.
+-  하지만, 1:N관계를 형성하다보니, DRF 서버에서 API 응답을 줄 때, dictionary 안 하나의 list 형태로 데이터를 전송하지 못하고 images 안에 각 image의 id들을 하나씩 전송되었습니다. 이를 해결하지 못한것이 아쉽습니다.
 - 참고 링크 : https://stackoverflow.com/questions/39645410/how-to-upload-multiple-files-in-django-rest-framework
 
-#### frontend에서 데이터를 어떻게 줄까?
+#### Client와 협업 생각해보기
 
 - DRF 서버를 구축한 만큼 client에서 정보를 받고 해당 요청에 따라 API 응답을 보내줘야할 때, 어떤 부분을 DRF에서 맡고, 어떤 부분을 client에서 맡을지 생각해보게 되었던 것 같습니다.
 - JWT인증 기반으로 request user를 판단하려고 하여, jwt 인증을 사용했습니다. user 로그인 시 client에서 localstorage나 state에 jwt를 저장 후 header에 담아서 요청을 보낸다고 생각하고 testcode와 postman을 이용하였습니다.
 - 하지만 update 같은 경우에는, 예측이 잘 되지 않았습니다. 먼저 저장된 instance를 리뷰 조회화면에서 제공해준다고 가정했을 때, 실제 client에서 원래 이미지와 추가된 이미지 정보를 보낼 때 이미 백엔드 서버에 저장된 이미지인지, 아닌지 구분하는 로직을 설계하지 못했습니다.
   - 임시적으로, image의 이름으로 분기처리를 시도하고, 원래 서버에 저장된 instance image의 수와 새로 들어온 image data의 수를 계산하여, 임시적으로 분기처리를 하여 중복을 최대한 방지하려 했습니다.
+- 앱 이용 결과 이미 게시글을 작성한 경우에는 자동으로 수정 페이지로 넘어가는 것을 확인할 수 있었습니다. 그로 인해 이를 DRF 서버에서 따로 예외 처리하지 않았습니다.
+  - 예외처리를 한다면, user가 해당 place에 리뷰를 썼는지 exists로 확인하고, 썼다면 해당 review의 pk를 받아 PUT 요청으로 redirect 하게 할 것 같습니다. 
+
 
 #### request 및 response 응답 
 
@@ -743,5 +755,11 @@ test2의 현재 point{"pk":2,
 
 - 참고 링크 : https://stackoverflow.com/questions/37111118/update-append-serializer-data-in-django-rest-framework
 
+#### INDEX 적용
 
+- 먼저 INDEX의 개념에 대해서 생소한 상태라 공부하는데 다소 어려움을 겪었습니다.
 
+- 포인트 부여 API 에서 전체 테이블 스캔이 일어나지 않게 포인트를 부여하는 과정에서, 검색 과정은 point를 부여할 User를 찾을 때 발생한다고 생각하였습니다. 이 과정에서 Primarykey로 User를 검색하였는데, 공부하는 과정에서 pk가 일반적인 DBMS에서는 INDEX로 자동 적용된다는 것을 알게 되었습니다.
+- 따라서, pk로 검색을 진행했습니다.
+- 하지만 이와 별개로 username을 INDEX로 입력 후 검색을 진행해보았는데, 소요되는 시간이 현재까지는 비슷했습니다.
+- 또한, 쿼리셋을 불러오는 여러 과정에서 exists나, first를 이용해서 속도를 향상시키려 했습니다.

@@ -1,8 +1,3 @@
-from django.test import TestCase
-
-# Create your tests here.
-from django.test import TestCase
-
 # Create your tests here.
 from django.test import TestCase
 
@@ -13,6 +8,9 @@ from django.urls import reverse
 import json
 import requests
 from place.models import Place, Review
+from time import time
+
+start = time()
 
 c = Client() 
 
@@ -45,3 +43,5 @@ pathname = os.getcwd()
 response = requests.request("DELETE", delete_review_url, headers=headers)
 
 print(response.text)
+end = time()
+print(f'time:{end-start}')

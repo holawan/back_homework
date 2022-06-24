@@ -10,7 +10,10 @@ class User(AbstractUser) :
 # class Point(models.Model) :
 #     #유저의 현재 포인트 
 #     point_now = models.OneToOneField(User,on_delete=models.CASCADE,related_name='point',default=0)
-
+    class Meta:
+       indexes = [
+            models.Index(fields=['username',]),
+        ]
 class PointLog(models.Model) :
     #리뷰를 지워도 로그는 보관하도록 SET_DEFALUT 설정 
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='pointLog')

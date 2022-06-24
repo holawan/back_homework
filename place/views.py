@@ -10,6 +10,21 @@ from place.serializers.review import ReviewSerializer
 from .models import Place, Review
 from rest_framework.views import APIView
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
+
+
+response_schema_dict = {
+    "200": openapi.Response(
+        description="POST TEST",
+        examples={
+            "application/json": {
+                    "content": "value",
+            }
+        }
+    )
+}
 # Create your views here.
 @api_view(['GET'])
 @permission_classes([AllowAny]) 
@@ -29,8 +44,8 @@ def place_deatil(request, place_pk):
 
 
 class ReviewListCreateView(APIView):
-
     permission_classes = (IsAuthenticated, )
+    @swagger_auto_schema(responses=response_schema_dict)
 
     def get(self,request,place_pk) :
         reviews = Review.objects.filter(place_id=place_pk)
@@ -53,7 +68,7 @@ class ReviewListCreateView(APIView):
         place = get_object_or_404(Place, pk=place_pk)
         
         #첫 리뷰일 때 보너스 점수 
-        if not (PlaceSerializer(place).data['reviews']) :
+        if not (place.reviews.exists()) :
             point += 1 
         #유효성검사 통과하면 
         if serializer.is_valid():
@@ -70,7 +85,7 @@ class ReviewListCreateView(APIView):
             pointlog = PointLog.objects.create(user=self.request.user,place=place,
                         action='작성',calculation=True,point=point)
             pointlog.save()
-            user = get_object_or_404(User,username=request.user)
+            user = get_object_or_404(User,pk=request.user.pk)
             user.point += point 
             user.save()
             response_dict = {'type':'REVIEW','action' : "ADD"}
@@ -100,7 +115,7 @@ class ReviewUpdateOrDeleteView(APIView):
         place = get_object_or_404(Place, pk=place_pk)
 
         is_content = bool(review.content)
-        is_image = bool(review.reviewimage_set.all())
+        is_image = review.reviewimage_set.exists()
         #유효성검사 통과하면 
         if serializer.is_valid():
             #저장 
@@ -138,7 +153,8 @@ class ReviewUpdateOrDeleteView(APIView):
             pointlog = PointLog.objects.create(user=self.request.user,place=place,
                         action='수정',calculation=calculation,point=point)
             pointlog.save()
-            user = get_object_or_404(User,username=request.user)
+            
+            user = get_object_or_404(User,pk=request.user.pk)
  
             user.point += point 
             user.save()
@@ -154,7 +170,7 @@ class ReviewUpdateOrDeleteView(APIView):
         serializer = ReviewSerializer(instance=review)
         point = 0
         is_content = bool(review.content)
-        is_image = bool(review.reviewimage_set.all())
+        is_image = review.reviewimage_set.exists()
         if is_content :
             point -= 1 
         if is_image :
@@ -162,14 +178,15 @@ class ReviewUpdateOrDeleteView(APIView):
         
         place = get_object_or_404(Place,pk=place_pk)
 
-        first_review = place.reviews.all()[0]
+        first_review = place.reviews.all().first()
         print(first_review,review)
         if first_review ==review :
             point -= 1 
         pointlog = PointLog.objects.create(user=self.request.user,place=place,
             action='삭제',calculation=False,point=point)
         pointlog.save()
-        user = get_object_or_404(User,username=request.user)
+        
+        user = get_object_or_404(User,pk=request.user.pk)
 
         user.point += point 
         user.save()

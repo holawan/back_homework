@@ -8,6 +8,11 @@ import json
 import requests
 from place.models import Place
 from django.contrib.auth import get_user_model
+from time import time, sleep
+
+start = time()
+
+
 c = Client() 
 
 
@@ -51,3 +56,5 @@ files=[
 response = requests.request("POST", create_review_url, headers=headers,data=payload, files=files)
 
 print(response.text)
+end = time()
+print(f'time:{end-start}')
