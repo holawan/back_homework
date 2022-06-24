@@ -6,10 +6,12 @@ from place.models import Place
 
 
 class User(AbstractUser) :
-    pass 
+    point = models.IntegerField(default=0)
+# class Point(models.Model) :
+#     #유저의 현재 포인트 
+#     point_now = models.OneToOneField(User,on_delete=models.CASCADE,related_name='point',default=0)
 
-
-class Point(models.Model) :
+class PointLog(models.Model) :
     #리뷰를 지워도 로그는 보관하도록 SET_DEFALUT 설정 
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='pointLog')
     #리뷰를 작성한 장소 
@@ -20,5 +22,3 @@ class Point(models.Model) :
     calculation = models.BooleanField()
     #부여하거나 차감할 포인트
     point = models.IntegerField()
-    #유저의 현재 포인트 
-    point_now = models.IntegerField()

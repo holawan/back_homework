@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from django.contrib import admin
-from .models import User,Point
+from .models import User,PointLog
 
 class UserAdmin(admin.ModelAdmin):
     list_display = ('pk', 'username',)
@@ -10,7 +10,12 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 
 
-class PointAdmin(admin.ModelAdmin) :
-    list_display = ('user','place','action','calculation','point','point_now')
+class PointLogAdmin(admin.ModelAdmin) :
+    list_display = ('user','place','action','calculation','point',)
 
-admin.site.register(Point,PointAdmin)
+admin.site.register(PointLog,PointLogAdmin)
+
+# class PointAdmin(admin.ModelAdmin) :
+#     list_display = ('pk','point_now',)
+
+# admin.site.register(Point,PointAdmin)

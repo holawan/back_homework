@@ -17,15 +17,19 @@ class Review(models.Model) :
     #리뷰를 쓰는 장소 참조 
     place = models.ForeignKey(Place,on_delete=models.CASCADE,related_name='reviews')
     #리뷰 내용 
-    content = models.TextField()
+    content = models.TextField(null=True,blank=True)
 
     def __str__(self):
-        return self.content
+        if self.content :
+
+            return f'{self.pk}번째 리뷰 : {self.content}'
+        else :
+            return f'{self.pk}번째 리뷰 : 내용 없음'
 
 #이미지를 여러개 추가하기 위해 1:N관계 형성 
 class ReviewImage(models.Model) :
     #이미지를 넣을 리뷰 참조 
     review = models.ForeignKey(Review,on_delete=models.CASCADE)
     #이미지 
-    image = models.ImageField(upload_to='thumbnails/review/',blank=True, null=True)
+    image = models.ImageField(upload_to='review/',blank=True, null=True)
     
