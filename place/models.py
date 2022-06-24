@@ -32,4 +32,3 @@ class ReviewImage(models.Model) :
     review = models.ForeignKey(Review,on_delete=models.CASCADE)
     #이미지 
     image = models.ImageField(upload_to='review/',blank=True, null=True)
-    

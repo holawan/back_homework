@@ -31,18 +31,22 @@ def place_deatil(request, place_pk):
     serializer = PlaceSerializer(place)
     return Response(serializer.data)
 
-@api_view(['GET'])
-@permission_classes([AllowAny]) 
-def review_list(request,place_pk) :
-    reviews = Review.objects.filter(place_id=place_pk)
-    serializer = ReviewSerializer(reviews,many=True)
-    return Response(serializer.data)
+# @api_view(['GET'])
+# @permission_classes([AllowAny]) 
+# def review_list(request,place_pk) :
+#     reviews = Review.objects.filter(place_id=place_pk)
+#     serializer = ReviewSerializer(reviews,many=True)
+#     return Response(serializer.data)
 
 
-class ReviewCreateView(APIView):
+class ReviewListCreateView(APIView):
 
     permission_classes = (IsAuthenticated, )
 
+    def get(self,request,place_pk) :
+        reviews = Review.objects.filter(place_id=place_pk)
+        serializer = ReviewSerializer(reviews,many=True)
+        return Response(serializer.data)
     def post(self, request,place_pk):
         #작성된 리뷰 content와 사진필드가 둘다 없을 때, 예외처리
         if not request.data :
@@ -81,13 +85,14 @@ class ReviewCreateView(APIView):
             user = get_object_or_404(User,username=request.user)
             user.point += point 
             user.save()
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            response_dict = {'type':'REVIEW','action' : "ADD"}
+            response_dict.update(serializer.data)
+            return Response(data=response_dict, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ReviewUpdateView(APIView):
+class ReviewUpdateOrDeleteView(APIView):
 
     permission_classes = (IsAuthenticated, )
 
@@ -98,30 +103,77 @@ class ReviewUpdateView(APIView):
         serializer = ReviewSerializer(instance=review,data=request.data, context={"request": request,'review_pk':review_pk})
         
         place = get_object_or_404(Place, pk=place_pk)
-        
-        #첫 리뷰일 때 보너스 점수 
-        if not (PlaceSerializer(place).data['reviews']) :
-            point += 1 
+
+        is_content = bool(review.content)
+        is_image = bool(review.reviewimage_set.all())
         #유효성검사 통과하면 
         if serializer.is_valid():
             #저장 
             serializer.save(user=self.request.user,place=place)
-            
-            #사진이 있을 때             
-            if serializer.data['images'] :
-                point +=1 
-            #내용이 있을 때 
-            if serializer.data['content'] : 
+            response_dict = {'type':'REVIEW','action' : "MOD"}
+            #기존 리뷰에 사진이 있었지만 방금 수정한 사항에는 없을 때         
+            if is_image and not serializer.data['images'] :
+                point -= 1 
+
+            #기존 리뷰에 사진이 없었지만 방금 수정한 사항에는 있을 때 
+            elif not is_image and serializer.data['images']:
                 point += 1 
 
+
+            #기존 리뷰에 내용이 있었지만 방금 수정한 사항에는 없을 때
+            if is_content and not serializer.data['content'] : 
+                point -= 1 
+
+            elif not is_content and serializer.data['content'] :
+                point += 1 
+
+            if point == 0 :
+                response_dict.update(serializer.data)
+                return Response(data=response_dict)
+            
+            #증감 여부 초기값 True 
+            calculation = True 
+
+            #point가 증가하면 True 
+            if point >0 :
+                calculation = True 
+            #감소하면 False
+            elif point<0 :
+                calculation = False
             pointlog = PointLog.objects.create(user=self.request.user,place=place,
-                        action='작성',calculation=True,point=point)
+                        action='수정',calculation=calculation,point=point)
             pointlog.save()
 
             user = get_object_or_404(User,username=request.user)
             user.point += point 
             user.save()
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+            
+            response_dict.update(serializer.data)
+            
+            return Response(data=response_dict)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def delete(self,request,place_pk,review_pk) :
+        review = get_object_or_404(Review,pk=review_pk) 
+        serializer = ReviewSerializer(instance=review)
+        point = 0
+        is_content = bool(review.content)
+        is_image = bool(review.reviewimage_set.all())
+        if is_content :
+            point -= 1 
+        if is_image :
+            point -= 1 
+        
+        place = get_object_or_404(Place,pk=place_pk)
+
+        first_review = place.reviews.all()[0]
+        if first_review ==review :
+            point -= 1 
+        pointlog = PointLog.objects.create(user=self.request.user,place=place,
+            action='삭제',calculation=False,point=point)
+        pointlog.save()
+        review.delete()
+        response_dict = {'type':'REVIEW','action' : "DELETE"}
+        response_dict.update(serializer.data)
+        return Response(response_dict,status=status.HTTP_204_NO_CONTENT)
