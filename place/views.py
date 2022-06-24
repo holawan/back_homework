@@ -143,8 +143,7 @@ class ReviewUpdateOrDeleteView(APIView):
                         action='수정',calculation=calculation,point=point)
             pointlog.save()
             user = get_object_or_404(User,username=request.user)
-            print(user)
-            print(user.explain)
+ 
             user.point += point 
             user.save()
             
@@ -173,6 +172,10 @@ class ReviewUpdateOrDeleteView(APIView):
         pointlog = PointLog.objects.create(user=self.request.user,place=place,
             action='삭제',calculation=False,point=point)
         pointlog.save()
+        user = get_object_or_404(User,username=request.user)
+
+        user.point += point 
+        user.save()
         review.delete()
         response_dict = {'type':'REVIEW','action' : "DELETE"}
         response_dict.update(serializer.data)

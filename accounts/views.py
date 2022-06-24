@@ -7,14 +7,15 @@ from rest_framework.response import Response
 
 from accounts.models import PointLog
 
-from .serializers import SignupSerializer, UserPointSerializer
-
-
+from .serializers import SignupSerializer, UserPointSerializer, UserSerializer
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import permission_classes
 # Create your views here.
 
 User = get_user_model()
 
 @api_view(['POST'])
+@permission_classes([AllowAny]) 
 def signup(request) :
     if User.objects.filter(username=request.data.get('username')).exists() :
         return Response({'error' : '일치하는 아이디가 존재합니다.'},status=status.HTTP_400_BAD_REQUEST)
@@ -29,7 +30,12 @@ def signup(request) :
 @api_view(['GET'])
 def pointlog(request,user_pk):
     userlog = get_list_or_404(PointLog,user=user_pk)
-    print(userlog)
-    # print(places)
     serializer = UserPointSerializer(userlog, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def point(request,user_pk):
+    user = get_object_or_404(User,pk=user_pk)
+    serializer = UserSerializer(user)
     return Response(serializer.data)

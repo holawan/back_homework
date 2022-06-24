@@ -107,3 +107,215 @@
 - Point log List 
 - Review List (Review_image를 역참조 )
 - Review Detail (User 참조 Place 참조  Image 역참조 )
+
+
+
+
+
+# 실행 방법
+
+## 환경 세팅
+
+### python 가상환경 설치
+
+```
+python -m venv venv
+```
+
+### requirements 설치
+
+```
+pip install -r requirements.txt
+```
+
+### 가상환경 실행
+
+```
+source venv/Scripts/activate
+```
+
+### mysql 연결 
+
+- Mysql Command Line Client 실행
+
+- Password 입력
+  - 환경 생성자의 경우 User = root
+
+```mys
+mysql> create database homework character set utf8mb4 collate utf8mb4_general_ci;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> use homework
+mysql> show tables;
+```
+
+- 환경 세팅의 경우 root폴더의 [my_settings.py](my_settings.py)에서 수정 가능
+
+
+
+### 마이그레이션
+
+```
+python manage.py makemigrations
+python manage.py migrate
+```
+
+
+
+## 계정 생성
+
+```
+python manage.py createsuperuser
+사용자 이름: admin
+이메일 주소: 
+Password: test12!@
+Password (again): test12!@
+Superuser created successfully.
+```
+
+### 장소 데이터(가상 데이터) 불러오기
+
+```
+python manage.py loaddata dumpdata/place.json
+```
+
+## 테스트(testcode)
+
+### 리뷰 작성 테스트
+
+root/place/tests/test_post.py
+
+```
+python manage.py test place.tests.test_post
+```
+
+- 실행 결과 
+
+```python
+{"type":"REVIEW",
+ "action":"ADD",
+ "pk":1,
+ "content":"한강 너무 좋았어요",
+ "images"[{"pk":1}],
+ "user":2,
+ "place":1}
+```
+
+### 포인트 로그 및 포인트 조회
+
+```
+python manage.py test accounts
+```
+
+- 실행 결과
+
+```python
+test의 포인트 로그[{"id":1,
+              "action":"작성",
+              "calculation":true,
+              "point":3,
+              "user":2,
+              "place":1}]
+
+test의 현재 point{"pk":2,
+               "point":3}
+```
+
+
+
+### 리뷰 수정 테스트(Image 삭제)
+
+```
+python manage.py test place.tests.test_edit
+```
+
+- 실행결과
+
+```python
+{"type":"REVIEW",
+ "action":"MOD",
+ "pk":1,
+ "content":"한강 너무 좋았어요2",
+ "images":[],
+ "user":2,
+ "place":1}
+```
+
+
+
+### 포인트 로그 및 포인트 조회
+
+```
+python manage.py test accounts
+```
+
+- 실행 결과
+
+```python
+test의 포인트 로그[{"id":1,
+              "action":"작성",
+              "calculation":true,
+              "point":3,
+              "user":2,"place":1}
+             ,
+             {"id":2,
+              "action":"수정",
+              "calculation":false,
+              "point":-1,
+              "user":2
+              ,"place":1}]
+test의 현재 point{"pk":2,"point":2}
+```
+
+
+
+### 리뷰 삭제 테스트
+
+```
+python manage.py test place.tests.test_delete
+```
+
+- 실행결과
+
+```python
+{"type":"REVIEW",
+ "action":"DELETE",
+ "pk":null,
+ "content":"한강 너무 좋았어요2",
+ "images":[],
+ "user":2,
+ "place":1}
+```
+
+
+
+### 포인트 로그 및 포인트 조회
+
+```
+python manage.py test accounts
+```
+
+- 실행 결과
+
+```python
+test의 포인트 로그[{"id":1,
+              "action":"작성",
+              "calculation":true,
+              "point":3,
+              "user":2,"place":1}
+             ,
+             {"id":2,
+              "action":"수정",
+              "calculation":false,
+              "point":-1,
+              "user":2
+              ,"place":1},
+             {"id":3,
+              "action":"삭제",
+              "calculation":false,
+              "point":-2,
+              "user":2,
+              "place":1}]
+test의 현재 point{"pk":2,"point":0}
+```
+

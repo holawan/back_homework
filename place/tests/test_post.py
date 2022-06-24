@@ -1,11 +1,15 @@
+from django.test import TestCase
+
+# Create your tests here.
 from django.shortcuts import get_object_or_404
 from django.test import Client
 from django.urls import reverse
 import json
 import requests
+from place.models import Place
 from django.contrib.auth import get_user_model
-
 c = Client() 
+
 
 
 
@@ -26,24 +30,24 @@ response = c.post(login_url,{'username':'test','password':'test12!@'})
 #토큰 가져오기 
 jwt =  json.loads(response.content)['token']
 #포인트 조회 테스트 
-user = get_object_or_404(User,username='test')
+place = get_object_or_404(Place,place_name='한강')
 
 #유저의 포인트 로그 조회 
-pointlog_url = f'http://127.0.0.1:8000/api/v1/accounts/pointlog/{user.pk}/'
+create_review_url = f"http://127.0.0.1:8000/api/v1/places/place/{place.pk}/reviews/"
 token = f'JWT {jwt}'
 
 #토큰 실어주기 
 headers = {
   'Authorization': token,
 }
+import os 
+pathname = os.getcwd()
 
+payload={"content" : "한강 너무 좋았어요"}
+files=[
+  ('image',('boj.png',open(f'{pathname}/test_image/한강.jpg','rb'),'image/png'))
+]
 #응답 결과 출력 
-response = requests.request("GET", pointlog_url, headers=headers)
+response = requests.request("POST", create_review_url, headers=headers,data=payload, files=files)
 
-print(f'{user.username}의 포인트 로그{response.text}')
-
-
-point_url = f'http://127.0.0.1:8000/api/v1/accounts/point/{user.pk}/'
-
-response = requests.request("GET", point_url, headers=headers)
-print(f'{user.username}의 현재 point{response.text}')
+print(response.text)

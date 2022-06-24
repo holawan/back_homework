@@ -23,7 +23,7 @@ class UserSerializer(serializers.ModelSerializer) :
 
     class Meta : 
         model = User
-        fields = ('pk',)
+        fields = ('pk','point')
 
 
 class UserPointSerializer(serializers.ModelSerializer) :
