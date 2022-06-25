@@ -7,19 +7,17 @@ from place.models import Review, ReviewImage
 class ReviewImageSerializer(serializers.ModelSerializer):
    class Meta:
       model = ReviewImage
-      fields = ['pk']
+      fields = ['id']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()
-
     def get_images(self, obj):
         image = obj.reviewimage_set.all()
         return ReviewImageSerializer(instance=image, many=True).data
-  
     class Meta:
         model = Review
-        fields = ('pk', 'content','images', 'user', 'place')
+        fields = ('id', 'content','images', 'user', 'place')
         read_only_fields = ('user','place')
 
 
@@ -29,6 +27,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         for image_data in images_data.getlist('image'):
             ReviewImage.objects.create(review=review, image=image_data)
         return review
+    
     def update(self, instance,validated_data):
         images_data = self.context['request'].FILES
         instance.content = validated_data.get('content',instance.content)
